@@ -1,14 +1,10 @@
 import java.awt.AWTException;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.Image;
 import java.awt.SystemTray;
-import java.awt.TrayIcon;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.net.URL;
 
@@ -20,6 +16,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSplitPane;
@@ -34,6 +31,10 @@ import gui.CustomBar;
 import gui.JXTrayIcon;
 
 public class Main extends JFrame {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private HabiticaClient client;
 	private JPanel settingsPane = new JPanel();
 	private JPanel userInfoPane = new JPanel();
@@ -88,45 +89,21 @@ public class Main extends JFrame {
 		for(Object obj : client.getDailies()) {
 			final JSONObject json = (JSONObject)obj;
 			final JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem((String)json.get("text"));
-			menuItem.addItemListener(new ItemListener() {
-				@Override
-				public void itemStateChanged(ItemEvent event) {
-					if(event.getStateChange() == ItemEvent.SELECTED) {
-						client.upgradeTask((String)json.get("id"), "up");
-						menuItem.setSelected(true);
-					}
-				}
-			});
+			menuItem.addItemListener(new TodoChangeItemListener(json, menuItem));
 			dailies.add(menuItem);
 		}
 
 		for(Object obj : client.getTasks()) {
 			final JSONObject json = (JSONObject)obj;
 			final JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem((String)json.get("text"));
-			menuItem.addItemListener(new ItemListener() {
-				@Override
-				public void itemStateChanged(ItemEvent event) {
-					if(event.getStateChange() == ItemEvent.SELECTED) {
-						client.upgradeTask((String)json.get("id"), "up");
-						menuItem.setSelected(true);
-					}
-				}
-			});
+			menuItem.addItemListener(new TodoChangeItemListener(json, menuItem));
 			todos.add(menuItem);
 		}
 
 		for(Object obj : client.getHabits()) {
 		 	final JSONObject json = (JSONObject)obj;
 		 	final JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem((String)json.get("text"));
-		 	menuItem.addItemListener(new ItemListener() {
-				@Override
-				public void itemStateChanged(ItemEvent event) {
-					if(event.getStateChange() == ItemEvent.SELECTED) {
-						client.upgradeTask((String)json.get("id"), "up");
-						menuItem.setSelected(true);
-					}
-				}
-			});
+		 	menuItem.addItemListener(new TodoChangeItemListener(json, menuItem));
 			habits.add(menuItem);
 		}
 
@@ -143,6 +120,11 @@ public class Main extends JFrame {
 		}
 
 	}
+	
+	public void createTask() {
+		
+	}
+	
 
 	public void initUI() {
 
@@ -157,7 +139,7 @@ public class Main extends JFrame {
 		mainPane.addTab("Tasks", mainTasksPane);
 		mainPane.addTab("Settings", settingsPane);
 
-		//User stats
+		//User statistics
 		userInfoPane.setLayout(new BoxLayout(userInfoPane, BoxLayout.PAGE_AXIS));
 		userInfoPane.add(Box.createRigidArea(new Dimension(0, 10)));
 		userInfoPane.add(experienceBar);
@@ -218,4 +200,28 @@ public class Main extends JFrame {
             return (new ImageIcon(imageURL, description)).getImage();
         }
     }
+	
+	class TodoChangeItemListener implements ItemListener {
+		private JSONObject json;
+		private JMenuItem changer;
+		
+		public TodoChangeItemListener(JSONObject json, JMenuItem changer) {
+			this.json = json;
+			this.changer = changer;
+		}
+		
+		@Override
+		public void itemStateChanged(ItemEvent event) {
+			if(event.getStateChange() == ItemEvent.SELECTED) {
+				client.upgradeTask((String)json.get("id"), "up");
+				changer.setSelected(true);
+			} 
+			if(event.getStateChange() == ItemEvent.DESELECTED) {
+				client.upgradeTask((String)json.get("id"), "down");
+				changer.setSelected(false);
+			}
+		}
+		
+	}
+	
 }

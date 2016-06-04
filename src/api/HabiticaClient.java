@@ -47,7 +47,7 @@ public class HabiticaClient {
 			e.printStackTrace();
 		}
 	}
-
+	
 	public void requestTasks() {
 		String urlString = baseURL + "tasks/user";
 		HttpClient client = HttpClientBuilder.create().build();
@@ -110,7 +110,6 @@ public class HabiticaClient {
 
 			Object obj = parser.parse(result.toString());
 			JSONObject answer = (JSONObject)((JSONObject)((JSONObject)obj).get("data")).get("stats");
-			System.out.println(answer);
 			this.experience = Double.parseDouble(answer.get("exp").toString());
 			this.hp = Double.parseDouble(answer.get("hp").toString());
 			this.mp = Double.parseDouble(answer.get("mp").toString());
