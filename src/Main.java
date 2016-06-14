@@ -3,10 +3,15 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.SystemTray;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -17,10 +22,12 @@ import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
+import javax.swing.Timer;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
@@ -29,11 +36,9 @@ import org.json.simple.JSONObject;
 import api.HabiticaClient;
 import gui.CustomBar;
 import gui.JXTrayIcon;
+import sun.tools.jar.resources.jar;
 
-public class Main extends JFrame {
-	/**
-	 * 
-	 */
+public class Main extends JFrame implements ActionListener {
 	private static final long serialVersionUID = 1L;
 	private HabiticaClient client;
 	private JPanel settingsPane = new JPanel();
@@ -44,8 +49,10 @@ public class Main extends JFrame {
 	private JSplitPane mainTasksPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, userInfoPane, tasksAndHabitsPane);
 	private CustomBar experienceBar = new CustomBar(Color.YELLOW, "XP");
 	private CustomBar healthBar = new CustomBar(Color.RED, "Health");
-
-
+	private boolean activate = false;
+	private Timer timer;
+	private JMenu dailies = new JMenu("Dailies"), todos = new JMenu("Todos"), habits = new JMenu("Habits");
+	
 	public static void main(String[] args) {
 		try {
 			UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
@@ -63,14 +70,18 @@ public class Main extends JFrame {
 		this.setSize(new Dimension(720, 640));
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.setContentPane(mainPane);
-		this.setVisible(true);
+		if(activate) {
+			this.setVisible(true);
+		}
 		initUI();
+
 		initTasks();
 		try {
 			initSystray();
 		} catch(IOException e) {
 			e.printStackTrace();
 		}
+		timer = new Timer(60000, this);
 	}
 
 	public void initSystray() throws IOException {
@@ -81,11 +92,16 @@ public class Main extends JFrame {
 		final JXTrayIcon trayIcon = new JXTrayIcon(createImage("habitica.png", "Habitica"));
 		final SystemTray tray = SystemTray.getSystemTray();
 		final JPopupMenu mainMenu = new JPopupMenu();
-
-		JMenu dailies = new JMenu("Dailies");
-		JMenu todos = new JMenu("Todos");
-		JMenu habits = new JMenu("Habits");
-
+		
+		JMenuItem createTask = new JMenuItem("Create Task");
+		
+		createTask.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				initTaskCreationPopup();
+			}
+		});
+		
 		for(Object obj : client.getDailies()) {
 			final JSONObject json = (JSONObject)obj;
 			final JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem((String)json.get("text"));
@@ -93,7 +109,7 @@ public class Main extends JFrame {
 			dailies.add(menuItem);
 		}
 
-		for(Object obj : client.getTasks()) {
+		for(Object obj : client.getTodos()) {
 			final JSONObject json = (JSONObject)obj;
 			final JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem((String)json.get("text"));
 			menuItem.addItemListener(new TodoChangeItemListener(json, menuItem));
@@ -106,10 +122,12 @@ public class Main extends JFrame {
 		 	menuItem.addItemListener(new TodoChangeItemListener(json, menuItem));
 			habits.add(menuItem);
 		}
-
+		
 		mainMenu.add(habits);
 		mainMenu.add(dailies);
 		mainMenu.add(todos);
+		mainMenu.addSeparator();;
+		mainMenu.add(createTask);
 		trayIcon.setImageAutoSize(true);
 		trayIcon.setJPopupMenu(mainMenu);
 
@@ -121,7 +139,19 @@ public class Main extends JFrame {
 
 	}
 	
-	public void createTask() {
+	public void initTaskCreationPopup() {
+		Object[] types = {"habit", "todo", "daily"};
+		String type = (String)JOptionPane.showInputDialog(this, "Type of task : ", "Create a task : step 1", JOptionPane.PLAIN_MESSAGE, null, types, types[1]);
+		
+		String title = (String)JOptionPane.showInputDialog(this, "Title of task : ", "Create a task : step 2", JOptionPane.PLAIN_MESSAGE, null, null, "Eat bananas everyday");
+		
+		String notes = (String)JOptionPane.showInputDialog(this, "Notes : ", "Create a task : step 3", JOptionPane.PLAIN_MESSAGE, null, null, "Created by habitica desktop client");
+		
+		try {
+			client.createTask(title, type, notes);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
 		
 	}
 	
@@ -163,20 +193,10 @@ public class Main extends JFrame {
 	}
 
 	public void initTasks() {
-		for(int i = 0; i < client.getTasks().size(); i++) {
-			final JSONObject current = (JSONObject)client.getTasks().get(i);
+		for(int i = 0; i < client.getTodos().size(); i++) {
+			final JSONObject current = (JSONObject)client.getTodos().get(i);
 			final JCheckBox checkBox = new JCheckBox((String)current.get("text"));
 			taskPane.add(checkBox);
-			checkBox.addItemListener(new ItemListener() {
-				@Override
-				public void itemStateChanged(ItemEvent event) {
-					if(event.getStateChange() == ItemEvent.SELECTED) {
-						client.upgradeTask((String)current.get("id"), "up");
-						taskPane.remove(checkBox);
-					}
-				}
-			});
-
 		}
 		for(int i = 0; i < client.getDailies().size(); i++) {
 			JSONObject current = (JSONObject)client.getDailies().get(i);
@@ -188,6 +208,35 @@ public class Main extends JFrame {
 			JCheckBox checkBox = new JCheckBox((String)current.get("text"));
 			habitsPane.add(checkBox);
 		}
+	}
+	
+	public void refresh() {
+		client.requestTasks(); //Gets the tasks from the webserver
+		initTasks(); //Update the tasks in the main UI
+		System.out.println(dailies.getItemCount());
+		todos.removeAll();
+		for(Object obj : client.getTodos()) {
+			final JSONObject json = (JSONObject)obj;
+			final JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem((String)json.get("text"));
+			menuItem.addItemListener(new TodoChangeItemListener(json, menuItem));
+			todos.add(menuItem);
+		}
+		dailies.removeAll();
+		for(Object obj : client.getDailies()) {
+			final JSONObject json = (JSONObject)obj;
+			final JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem((String)json.get("text"));
+			menuItem.addItemListener(new TodoChangeItemListener(json, menuItem));
+			dailies.add(menuItem);
+		}
+		habits.removeAll();
+		for(Object obj : client.getHabits()) {
+			final JSONObject json = (JSONObject)obj;
+			final JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem((String)json.get("text"));
+			menuItem.addItemListener(new TodoChangeItemListener(json, menuItem));
+			habits.add(menuItem);
+		}
+		
+		
 	}
 
 	protected static Image createImage(String path, String description) {
@@ -218,10 +267,15 @@ public class Main extends JFrame {
 			} 
 			if(event.getStateChange() == ItemEvent.DESELECTED) {
 				client.upgradeTask((String)json.get("id"), "down");
-				changer.setSelected(false);
+				changer.setSelected(false); 
 			}
 		}
 		
+	}
+	
+	@Override
+	public void actionPerformed(ActionEvent arg0) {
+		refresh();
 	}
 	
 }

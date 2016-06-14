@@ -6,10 +6,13 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import javax.swing.Timer;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -22,7 +25,7 @@ public class HabiticaClient {
 	private String baseURL = "https://habitica.com/api/v3/";
 	private String api_token = "5082f9c4-7c04-4981-8096-1a3ee24b22e9";
 	private String user_id = "b58f5fda-39a8-4de0-9184-7225433dc325";
-	private JSONArray tasks = new JSONArray();
+	private JSONArray todos = new JSONArray();
 	private JSONArray dailies = new JSONArray();
 	private JSONArray habits = new JSONArray();
 	private double experience = 0;
@@ -30,10 +33,11 @@ public class HabiticaClient {
 	private double hp = 0;
 	private double mp = 0;
 	private int toNextLevel = 0;
-
-
+	private String sampleTask = new String("{\"text\":\"Lire\",\"type\":\"habit\",\"value\":0,\"tags\":[],\"notes\":\"Created by habitica desktop client\"}");
+	
 	public HabiticaClient() {
 		readCredentials();
+
 	}
 
 	public void readCredentials() {
@@ -74,7 +78,7 @@ public class HabiticaClient {
 				if(o2.get("type").equals("habit")) {
 					habits.add(o2);
 				} else if(o2.get("type").equals("todo")) {
-					tasks.add(o2);
+					todos.add(o2);
 				} else if(o2.get("type").equals("daily")) {
 					dailies.add(o2);
 				}
@@ -121,8 +125,7 @@ public class HabiticaClient {
 			e.printStackTrace();
 		}
 	}
-
-
+	
 	public void upgradeTask(String taskID, String direction) {
 		if(direction.equals("up") || direction.equals("down")) {
 			String url = baseURL + "tasks/" + taskID + "/score/" + direction;HttpClient client = HttpClientBuilder.create().build();
@@ -151,13 +154,57 @@ public class HabiticaClient {
 
 
 	}
+	
+	public void createTask(String title, String type, String notes) throws FileNotFoundException {
+			
+		try {
+			JSONObject obj = (JSONObject)parser.parse(sampleTask);
+			obj.put("text", title);
+			if(type.equals("habit") || type.equals("todo") || type.equals("daily")) {
+				obj.put("type", type);
+			} else {
+				System.err.println("Error : Wrong type of habit");
+				return;
+			}
+			
+			obj.put("notes", notes);
+			
+			System.out.println(obj.toJSONString());
+			
+			HttpClient client = HttpClientBuilder.create().build();
+			HttpPost request = new HttpPost("https://habitica.com/api/v3/tasks/user");
+			request.addHeader("x-api-key", api_token);
+			request.addHeader("x-api-user", user_id);
+			request.addHeader("Content-Type", "application/json");
+			
+			StringEntity requestEntity = new StringEntity(obj.toJSONString());
+			
+			request.setEntity(requestEntity);
+			
+			HttpResponse response = client.execute(request);
+			
+			if(response.getStatusLine().getStatusCode() >= 200 && response.getStatusLine().getStatusCode() <= 210) {
+				System.out.println("Task created successfully");
+			} else {
+				System.out.println("Request failed. Http Status code : " + response.getStatusLine().getStatusCode());
+				String buf = new String();
+				while((buf = new BufferedReader(new InputStreamReader(response.getEntity().getContent())).readLine()) != null) {
+					System.out.println(buf);
+				}
+			}
+			
+		} catch (ParseException | IOException e) {
+			e.printStackTrace();
+		}
 
-	public JSONArray getTasks() {
-		return tasks;
 	}
 
-	public void setTasks(JSONArray tasks) {
-		this.tasks = tasks;
+	public JSONArray getTodos() {
+		return todos;
+	}
+
+	public void setTasks(JSONArray todos) {
+		this.todos = todos;
 	}
 
 	public JSONArray getDailies() {
