@@ -72,7 +72,6 @@ public class HabiticaClient {
 
 			JSONObject obj = (JSONObject)parser.parse(result.toString());
 			JSONArray data = (JSONArray)obj.get("data");
-			System.out.println(data);
 			for(Object o : data) {
 				JSONObject o2 = (JSONObject)o;
 				if(o2.get("type").equals("habit")) {
@@ -169,7 +168,6 @@ public class HabiticaClient {
 			
 			obj.put("notes", notes);
 			
-			System.out.println(obj.toJSONString());
 			
 			HttpClient client = HttpClientBuilder.create().build();
 			HttpPost request = new HttpPost("https://habitica.com/api/v3/tasks/user");
@@ -187,10 +185,6 @@ public class HabiticaClient {
 				System.out.println("Task created successfully");
 			} else {
 				System.out.println("Request failed. Http Status code : " + response.getStatusLine().getStatusCode());
-				String buf = new String();
-				while((buf = new BufferedReader(new InputStreamReader(response.getEntity().getContent())).readLine()) != null) {
-					System.out.println(buf);
-				}
 			}
 			
 		} catch (ParseException | IOException e) {

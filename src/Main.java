@@ -213,7 +213,6 @@ public class Main extends JFrame implements ActionListener {
 	public void refresh() {
 		client.requestTasks(); //Gets the tasks from the webserver
 		initTasks(); //Update the tasks in the main UI
-		System.out.println(dailies.getItemCount());
 		todos.removeAll();
 		for(Object obj : client.getTodos()) {
 			final JSONObject json = (JSONObject)obj;
@@ -235,7 +234,6 @@ public class Main extends JFrame implements ActionListener {
 			menuItem.addItemListener(new TodoChangeItemListener(json, menuItem));
 			habits.add(menuItem);
 		}
-		
 		
 	}
 
@@ -276,6 +274,7 @@ public class Main extends JFrame implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent arg0) {
 		refresh();
+		System.out.println("Refreshed");
 	}
 	
 }
