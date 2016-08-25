@@ -94,11 +94,19 @@ public class Main extends JFrame implements ActionListener {
 		final JPopupMenu mainMenu = new JPopupMenu();
 		
 		JMenuItem createTask = new JMenuItem("Create Task");
+		JMenuItem refreshButton = new JMenuItem("Refresh Tasks");
 		
 		createTask.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				initTaskCreationPopup();
+			}
+		});
+		
+		refreshButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+//				refresh();
 			}
 		});
 		
@@ -128,6 +136,7 @@ public class Main extends JFrame implements ActionListener {
 		mainMenu.add(todos);
 		mainMenu.addSeparator();;
 		mainMenu.add(createTask);
+		mainMenu.add(refreshButton);
 		trayIcon.setImageAutoSize(true);
 		trayIcon.setJPopupMenu(mainMenu);
 
@@ -210,32 +219,38 @@ public class Main extends JFrame implements ActionListener {
 		}
 	}
 	
-	public void refresh() {
-		client.requestTasks(); //Gets the tasks from the webserver
-		initTasks(); //Update the tasks in the main UI
-		todos.removeAll();
-		for(Object obj : client.getTodos()) {
-			final JSONObject json = (JSONObject)obj;
-			final JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem((String)json.get("text"));
-			menuItem.addItemListener(new TodoChangeItemListener(json, menuItem));
-			todos.add(menuItem);
-		}
-		dailies.removeAll();
-		for(Object obj : client.getDailies()) {
-			final JSONObject json = (JSONObject)obj;
-			final JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem((String)json.get("text"));
-			menuItem.addItemListener(new TodoChangeItemListener(json, menuItem));
-			dailies.add(menuItem);
-		}
-		habits.removeAll();
-		for(Object obj : client.getHabits()) {
-			final JSONObject json = (JSONObject)obj;
-			final JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem((String)json.get("text"));
-			menuItem.addItemListener(new TodoChangeItemListener(json, menuItem));
-			habits.add(menuItem);
-		}
-		
-	}
+//	public void refresh() {
+//		client.requestTasks(); //Gets the tasks from the webserver
+//		initTasks(); //Update the tasks in the main UI
+//		for(int i = 0; i < todos.getMenuComponentCount(); i++) {
+//			todos.remove(i);
+//		}
+//		for(Object obj : client.getTodos()) {
+//			final JSONObject json = (JSONObject)obj;
+//			final JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem((String)json.get("text"));
+//			menuItem.addItemListener(new TodoChangeItemListener(json, menuItem));
+//			todos.add(menuItem);
+//		}
+//		for(int i = 0; i < dailies.getMenuComponentCount(); i++) {
+//			dailies.remove(i);
+//		}
+//		for(Object obj : client.getDailies()) {
+//			final JSONObject json = (JSONObject)obj;
+//			final JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem((String)json.get("text"));
+//			menuItem.addItemListener(new TodoChangeItemListener(json, menuItem));
+//			dailies.add(menuItem);
+//		}
+//		for(int i = 0; i < habits.getMenuComponentCount(); i++) {
+//			habits.remove(i);
+//		}
+//		for(Object obj : client.getHabits()) {
+//			final JSONObject json = (JSONObject)obj;
+//			final JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem((String)json.get("text"));
+//			menuItem.addItemListener(new TodoChangeItemListener(json, menuItem));
+//			habits.add(menuItem);
+//		}
+//		
+//	}
 
 	protected static Image createImage(String path, String description) {
         URL imageURL = Main.class.getResource(path);
@@ -273,7 +288,7 @@ public class Main extends JFrame implements ActionListener {
 	
 	@Override
 	public void actionPerformed(ActionEvent arg0) {
-		refresh();
+//		refresh();
 		System.out.println("Refreshed");
 	}
 	

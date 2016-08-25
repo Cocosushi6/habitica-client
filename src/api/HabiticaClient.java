@@ -23,8 +23,8 @@ public class HabiticaClient {
 
 	private JSONParser parser = new JSONParser();
 	private String baseURL = "https://habitica.com/api/v3/";
-	private String api_token = "5082f9c4-7c04-4981-8096-1a3ee24b22e9";
-	private String user_id = "b58f5fda-39a8-4de0-9184-7225433dc325";
+	private String api_token = "your_api_token";
+	private String user_id = "your_user_id";
 	private JSONArray todos = new JSONArray();
 	private JSONArray dailies = new JSONArray();
 	private JSONArray habits = new JSONArray();
@@ -46,7 +46,8 @@ public class HabiticaClient {
 			this.api_token = reader.readLine();
 			this.user_id = reader.readLine();
 		} catch (FileNotFoundException e) {
-			System.out.println("Please create file \'credentials.txt\' and add it your credentials.");
+			System.err.println("Please create file \'credentials.txt\' and add it your credentials.");
+			System.exit(0);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
