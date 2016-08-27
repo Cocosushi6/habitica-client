@@ -8,3 +8,5 @@ Its features :
 - Feel free to add features yourself !
 
 Note : The JXTrayIcon class is not from me, it has been written by Alexander Potochkin to allow using themeable Swing components in system tray (https://svn.java.net/svn/swinghelper~svn/trunk/src/java/org/jdesktop/swinghelper/tray/).
+
+To use the client, create a file 'credentials.txt' in the same directory than the client and put your API token, then your user ID (they can both be found on habitica.com, in the 'API' section of the settings).
